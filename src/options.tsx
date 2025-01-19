@@ -18,7 +18,7 @@ function IndexOptions() {
         <div className="flex flex-col space-y-4 w-[800px] text-lg p-4">
             <div>
                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="provider">プロバイダ</label>
-                <select id="provider" className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value={provider || LLMProvider.GOOGLE} onChange={(e) => { setProvider(e.target.value as LLMProvider) }}>
+                <select id="provider" className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value={provider} onChange={(e) => { setProvider(e.target.value as LLMProvider) }}>
                     <option value={LLMProvider.GOOGLE}>{LLMProvider.GOOGLE}</option>
                     <option value={LLMProvider.OPENAI}>{LLMProvider.OPENAI}</option>
                     <option value={LLMProvider.AZURE_OPENAI}>{LLMProvider.AZURE_OPENAI}</option>
