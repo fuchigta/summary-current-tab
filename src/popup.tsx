@@ -60,10 +60,11 @@ async function summarizeTextByLLM(title: string, text: string) {
       throw new Error("unknown provider");
   }
 
-  const res = await llm.invoke([
-    [
-      "human",
-      `
+  try {
+    const res = await llm.invoke([
+      [
+        "human",
+        `
       以下のWebページの文章を要約してください。
 
       - Webページ全体の文章なので、広告や不要なコンテンツが含まれる可能性があります。以下の制約を遵守してください。
@@ -82,10 +83,14 @@ async function summarizeTextByLLM(title: string, text: string) {
 
       ${text}
       `
-    ]
-  ]);
+      ]
+    ]);
 
-  return res.content as string;
+    return res.content as string;
+  } catch (e) {
+    console.error(e);
+    throw new Error("llm invoke failed");
+  }
 }
 
 async function summarizeCurrentTab() {
@@ -117,7 +122,12 @@ function IndexPopup() {
   const [summary, setSummary] = useState('');
 
   useEffect(() => {
-    summarizeCurrentTab().then((res) => setSummary(res));
+    summarizeCurrentTab()
+      .then((res) => setSummary(res))
+      .catch(() => {
+        setSummary("設定画面からLLMの設定を確認してください");
+        chrome.runtime.openOptionsPage();
+      })
   }, []);
 
   return (
