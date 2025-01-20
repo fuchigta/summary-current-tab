@@ -1,6 +1,8 @@
-name: "Submit to Web Store"
+name: "Release"
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - master
 
 jobs:
   build:
@@ -27,8 +29,15 @@ jobs:
         run: pnpm build
       - name: Package the extension into a zip artifact
         run: pnpm package
-      - name: Browser Platform Publish
-        uses: PlasmoHQ/bpp@v3
+      - name: Set Time
+        env:
+          TZ: "Asia/Tokyo"
+        run: echo "CURRENT_DATETIME=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
-          keys: ${{ secrets.SUBMIT_KEYS }}
-          artifact: build/chrome-mv3-prod.zip
+          tag_name: ${{ env.CURRENT_DATETIME }}
+          name: ${{ env.CURRENT_DATETIME }}
+          draft: false
+          prerelease: false
+          files: build/chrome-mv3-prod.zip
