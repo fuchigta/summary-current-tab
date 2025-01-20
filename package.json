@@ -39,7 +39,8 @@
     "permissions": [
       "activeTab",
       "tabs",
-      "scripting"
+      "scripting",
+      "contextMenus"
     ]
   },
   "pnpm": {
