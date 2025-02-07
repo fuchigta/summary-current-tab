@@ -6,8 +6,6 @@ import { Storage } from "@plasmohq/storage"
 
 import { LLMProvider } from "~options"
 
-import { z } from "zod"
-
 function getPageContent() {
   const doc = document.cloneNode(true) as Document
 
@@ -33,9 +31,18 @@ function getPageContent() {
   }
 }
 
-const ResponseFormat = z.object({
-  markdown: z.string().describe("マークダウン形式の要約"),
-});
+const ResponseFormat = {
+  name: "markdown",
+  description: "Create markdown",
+  parameters: {
+    title: "markdown",
+    type: "object",
+    properties: {
+      markdown: { type: "string", description: "マークダウン" },
+    },
+    required: ["markdown"],
+  },
+}
 
 async function summarizeTextByLLM(title: string, text: string) {
   const storage = new Storage()
