@@ -2,14 +2,22 @@ import { useEffect, useState } from "react"
 
 import "~style.css"
 
+import { marked } from "marked"
 import { summarizeCurrentTab } from "~lib/summarize"
+
+marked.use({
+  gfm: true
+})
 
 function IndexPopup() {
   const [summary, setSummary] = useState("")
 
   useEffect(() => {
     summarizeCurrentTab()
-      .then((res) => setSummary(res))
+      .then((res) => {
+        navigator.clipboard.writeText(res);
+        setSummary(marked(res, { async: false }));
+      })
       .catch(() => {
         chrome.runtime.openOptionsPage()
       })

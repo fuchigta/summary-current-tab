@@ -1,15 +1,12 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai"
 import { AzureChatOpenAI, ChatOpenAI } from "@langchain/openai"
-import { marked } from "marked"
 import TurndownService from "turndown"
 
 import { Storage } from "@plasmohq/storage"
 
 import { LLMProvider } from "~options"
 
-marked.use({
-  gfm: true
-})
+import { z } from "zod"
 
 function getPageContent() {
   const doc = document.cloneNode(true) as Document
@@ -35,6 +32,10 @@ function getPageContent() {
     content: element.outerHTML
   }
 }
+
+const ResponseFormat = z.object({
+  markdown: z.string().describe("マークダウン形式の要約"),
+});
 
 async function summarizeTextByLLM(title: string, text: string) {
   const storage = new Storage()
@@ -69,7 +70,7 @@ async function summarizeTextByLLM(title: string, text: string) {
   }
 
   try {
-    const res = await llm.invoke([
+    const res = await llm.withStructuredOutput(ResponseFormat).invoke([
       [
         "human",
         `
@@ -94,7 +95,7 @@ async function summarizeTextByLLM(title: string, text: string) {
       ]
     ])
 
-    return res.content as string
+    return res.markdown
   } catch (e) {
     console.error(e)
     throw new Error("llm invoke failed")
@@ -124,5 +125,5 @@ export async function summarizeCurrentTab() {
     service.turndown(result.content)
   )
 
-  return marked(res, { async: false })
+  return res
 }
