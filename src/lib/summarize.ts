@@ -1,6 +1,7 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai"
 import { AzureChatOpenAI, ChatOpenAI } from "@langchain/openai"
 import TurndownService from "turndown"
+import { z } from "zod"
 
 import { Storage } from "@plasmohq/storage"
 
@@ -31,18 +32,9 @@ function getPageContent() {
   }
 }
 
-const ResponseFormat = {
-  name: "markdown",
-  description: "Create markdown",
-  parameters: {
-    title: "markdown",
-    type: "object",
-    properties: {
-      markdown: { type: "string", description: "マークダウン" },
-    },
-    required: ["markdown"],
-  },
-}
+const ResponseFormat = z.object({
+  markdown: z.string().describe("マークダウン形式の要約"),
+});
 
 async function summarizeTextByLLM(title: string, text: string) {
   const storage = new Storage()
@@ -88,7 +80,7 @@ async function summarizeTextByLLM(title: string, text: string) {
           - メインコンテンツ以外の省略した部分については言及しないでください。
         - メインコンテンツの重要な部分についてまとめてください。以下の制約を遵守してください。
           - 出力はマークダウン形式としてください。
-          - 箇条書きや表などを利用して、わかりやすくまとめてください。
+          - 箇条書き、表、画像などを利用して、わかりやすくまとめてください。
           - 文体は「ですます」調としてください。
 
         ---

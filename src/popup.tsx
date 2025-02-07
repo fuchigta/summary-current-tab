@@ -15,7 +15,7 @@ function IndexPopup() {
   useEffect(() => {
     summarizeCurrentTab()
       .then((res) => {
-        navigator.clipboard.writeText(res);
+        window.navigator.clipboard.writeText(res);
         setSummary(marked(res, { async: false }));
       })
       .catch(() => {
