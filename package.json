@@ -47,10 +47,10 @@
   },
   "pnpm": {
     "overrides": {
-      "@langchain/core": "0.3.31"
+      "@langchain/core": "0.3.80"
     }
   },
   "overrides": {
-    "@langchain/core": "0.3.31"
+    "@langchain/core": "0.3.80"
   }
 }
