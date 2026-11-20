@@ -1,8 +1,12 @@
 # cccc (https://github.com/moznion/cccc) の設定
 # 認知的複雑度・循環的複雑度がこの閾値を超える関数があると CI が失敗します。
 #
-# 閾値は一般的に使われる標準的な値です。
+# 導入時: 閾値は一般的に使われる標準的な値（max-cognitive = 15 / max-cyclomatic = 10）でした。
 # 導入時点の実測値（7ファイル・17関数）は認知的複雑度 max 2 / 循環的複雑度 max 5
 # （いずれも src/lib/summarize.ts の summarizeTextByLLM）であり、十分な余裕があります。
-max-cognitive = 15
-max-cyclomatic = 10
+#
+# 2026-11-20 再計測: 実測値は導入時と変わらず認知的複雑度 max 2 / 循環的複雑度 max 5
+# （7ファイル・17関数、最大は src/lib/summarize.ts の summarizeTextByLLM）。
+# 実測最大値 +2 として、閾値を 15 / 10 から 4 / 7 に引き下げました。
+max-cognitive = 4
+max-cyclomatic = 7
