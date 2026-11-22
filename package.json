@@ -15,7 +15,7 @@
     "@langchain/openai": "^0.3.17",
     "@plasmohq/storage": "^1.13.0",
     "@types/turndown": "^5.0.5",
-    "langchain": "^0.3.11",
+    "langchain": "^0.3.37",
     "marked": "^15.0.6",
     "plasmo": "0.89.4",
     "postcss": "^8.5.23",
@@ -33,7 +33,7 @@
     "@types/react-dom": "18.2.18",
     "prettier": "3.2.4",
     "typescript": "5.3.3",
-    "vitest": "^3.2.7"
+    "vitest": "^4.1.11"
   },
   "manifest": {
     "host_permissions": [
