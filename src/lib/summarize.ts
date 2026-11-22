@@ -32,9 +32,13 @@ function getPageContent() {
   }
 }
 
-const ResponseFormat = z.object({
-  markdown: z.string().describe("マークダウン形式の要約"),
-});
+export const ResponseFormat = z.object({
+  markdown: z.string().describe("マークダウン形式の要約")
+})
+
+// langchain の各プロバイダは zod v3 前提の zod-to-json-schema で変換するため、
+// zod v4 のスキーマは JSON Schema に変換してから渡し、結果は zod で検証する
+export const ResponseFormatJsonSchema = z.toJSONSchema(ResponseFormat)
 
 async function summarizeTextByLLM(title: string, text: string) {
   const storage = new Storage()
@@ -68,8 +72,10 @@ async function summarizeTextByLLM(title: string, text: string) {
       throw new Error("unknown provider")
   }
 
+  const structuredLLM = llm.withStructuredOutput(ResponseFormatJsonSchema)
+
   try {
-    const res = await llm.withStructuredOutput(ResponseFormat).invoke([
+    const res = await structuredLLM.invoke([
       [
         "human",
         `
@@ -94,7 +100,7 @@ async function summarizeTextByLLM(title: string, text: string) {
       ]
     ])
 
-    return res.markdown
+    return ResponseFormat.parse(res).markdown
   } catch (e) {
     console.error(e)
     throw new Error("llm invoke failed")
