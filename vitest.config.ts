@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url"
-import { defineConfig } from "vitest/config"
+import { configDefaults, defineConfig } from "vitest/config"
 
 export default defineConfig({
   resolve: {
@@ -10,5 +10,10 @@ export default defineConfig({
         replacement: fileURLToPath(new URL("./src/$1", import.meta.url))
       }
     ]
+  },
+  test: {
+    // vitest 4 から既定の exclude が node_modules と .git だけになったため、
+    // plasmo の生成物を明示的に除外する
+    exclude: [...configDefaults.exclude, "build/**", ".plasmo/**"]
   }
 })
