@@ -1,0 +1,41 @@
+name: jscpd
+
+# コピー＆ペーストによる重複が増えていないかを確かめる。jscpd は package.json の依存に
+# 入れず、npx の版指定で固定する。設定は .jscpd.json にあり、JSON にはコメントを
+# 書けないので設定の根拠はここに残す。
+#
+# - 版: jscpd 5.4.3（Rust エンジン）。src/ の TS・TSX・CSS のほか、vitest.config.ts・
+#   .prettierrc.mjs・package.json と .github/workflows/*.yml も測る。
+#   README.md・tsconfig.json・tailwind.config.js・postcss.config.js・.vscode/・assets/ は
+#   コードブロックが無いか min-tokens 未満のため、今は測定に入らない
+# - 検出の基準: 既定値（min-tokens 50・min-lines 5・mode mild）で exact のみ。
+#   .gitignore は既定で除外される（node_modules/、build/、.plasmo/ など）
+# - 実測（2026-11-24）: 11 ファイル・0 クローン、重複率は行 0.00%・トークン 0.00%
+#   （この jscpd.yml を含む）
+# - threshold: 行の重複率と比べられ、超えたときだけ失敗する。実測が 0% のため、
+#   新しい重複が入ったら落ちるように 0.5 から始める（一時的に重複を入れて落ちることを
+#   確認済み）。重複が増えて引き上げるときは、実測に約 0.5 ポイントの余裕を持たせる
+# - ignore（除外しないと 14 ファイル・2 クローン・行 0.75%・トークン 0.42%）:
+#   - pnpm-lock.yaml: pnpm の生成物のため外す。測定に入り（8,054 行）、内部の
+#     transitivePeerDependencies の並びが 2 件のクローンになる。分母も膨らませる
+#   - src/**/*.test.ts: テストファイル。本番コードの重複だけをゲートで見る
+#     （テストは素直に書く方針。今はクローンを含まない）
+#   - 手元で測るときは --ignore を渡さず .jscpd.json を使う。CLI の --ignore は .jscpd.json の
+#     ignore に足されるのではなく置き換えるため、数値がずれる
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  jscpd:
+    name: jscpd
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: jscpd
+        run: npx --yes jscpd@5.4.3 --no-tips --no-colors .
