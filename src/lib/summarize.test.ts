@@ -1,14 +1,17 @@
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models"
+import { AIMessage } from "@langchain/core/messages"
+import type { ChatResult } from "@langchain/core/outputs"
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai"
 import { ChatOpenAI } from "@langchain/openai"
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { ZodError } from "zod"
 
 import { ResponseFormat, ResponseFormatJsonSchema } from "~lib/summarize"
 
-// withStructuredOutput が返す Runnable から LLM に渡される tools を取り出す
-function findTools(runnable: any): any[] | undefined {
-  if (!runnable) return undefined
-  return runnable.kwargs?.tools ?? findTools(runnable.bound ?? runnable.first)
+// LLM が JSON を返したことにする ChatResult
+function fakeResult(body: unknown): ChatResult {
+  const text = JSON.stringify(body)
+  return { generations: [{ text, message: new AIMessage(text) }] }
 }
 
 describe("ResponseFormat", () => {
@@ -28,6 +31,10 @@ describe("ResponseFormat", () => {
 })
 
 describe("ResponseFormatJsonSchema", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it("markdown を必須の文字列として表す", () => {
     expect(ResponseFormatJsonSchema).toMatchObject({
       type: "object",
@@ -38,31 +45,46 @@ describe("ResponseFormatJsonSchema", () => {
     })
   })
 
+  // LLM の呼び出し口 (_generate) をモックし、実際に API へ送られる
+  // structured output 用のオプションにスキーマが入っていることを確かめる
   type Case = [
     string,
-    () => { withStructuredOutput(schema: Record<string, any>): unknown },
-    (tools: any[]) => any
+    () => BaseChatModel,
+    (options: Record<string, any>) => any
   ]
 
   it.each<Case>([
     [
       "Google",
       () => new ChatGoogleGenerativeAI({ model: "gemini", apiKey: "dummy" }),
-      (tools: any[]) => tools[0].functionDeclarations[0].parameters
+      (options) => options.responseSchema
     ],
     [
       "OpenAI",
       () => new ChatOpenAI({ model: "gpt-4o", apiKey: "dummy" }),
-      (tools: any[]) => tools[0].function.parameters
+      (options) => options.response_format.json_schema.schema
     ]
-  ])("%s の structured output にスキーマが渡る", (_, createLLM, getParams) => {
-    const tools = findTools(
-      createLLM().withStructuredOutput(ResponseFormatJsonSchema)
-    )
+  ])(
+    "%s の structured output にスキーマが渡り、結果がパースされる",
+    async (_, createLLM, getSchema) => {
+      const llm = createLLM()
+      // OpenAI は withStructuredOutput で自身を複製するため、prototype をモックする
+      const generate = vi
+        .spyOn(Object.getPrototypeOf(llm), "_generate")
+        .mockResolvedValue(fakeResult({ markdown: "# 要約" }))
 
-    expect(getParams(tools).properties.markdown).toEqual({
-      type: "string",
-      description: "マークダウン形式の要約"
-    })
-  })
+      const res = await llm
+        .withStructuredOutput(ResponseFormatJsonSchema)
+        .invoke([["human", "hi"]])
+
+      expect(res).toEqual({ markdown: "# 要約" })
+      expect(
+        getSchema(generate.mock.calls[0][1] as Record<string, any>).properties
+          .markdown
+      ).toEqual({
+        type: "string",
+        description: "マークダウン形式の要約"
+      })
+    }
+  )
 })
