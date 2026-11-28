@@ -63,6 +63,7 @@ async function summarizeTextByLLM(title: string, text: string) {
         model: await storage.get("model"),
         apiKey: await storage.get("apiKey"),
         azureOpenAIApiDeploymentName: await storage.get("model"),
+        // Stryker disable next-line StringLiteral: 等価。azureOpenAIApiKey が無いと AzureChatOpenAI は同じ値の apiKey を使う
         azureOpenAIApiKey: await storage.get("apiKey"),
         azureOpenAIApiVersion: await storage.get("apiVersion"),
         azureOpenAIBasePath: await storage.get("basePath")
@@ -119,6 +120,7 @@ export async function summarizeCurrentTab() {
   })
 
   const service = new TurndownService({
+    // Stryker disable next-line StringLiteral: 等価。turndown は "setext" 以外を atx として扱う
     headingStyle: "atx",
     bulletListMarker: "-",
     codeBlockStyle: "fenced",
