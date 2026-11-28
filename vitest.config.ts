@@ -13,7 +13,13 @@ export default defineConfig({
   },
   test: {
     // vitest 4 から既定の exclude が node_modules と .git だけになったため、
-    // plasmo の生成物を明示的に除外する
-    exclude: [...configDefaults.exclude, "build/**", ".plasmo/**"]
+    // plasmo の生成物を明示的に除外する。.stryker-tmp は StrykerJS の作業用コピーで、
+    // Stryker が途中で止まると残ることがある
+    exclude: [
+      ...configDefaults.exclude,
+      "build/**",
+      ".plasmo/**",
+      ".stryker-tmp/**"
+    ]
   }
 })
