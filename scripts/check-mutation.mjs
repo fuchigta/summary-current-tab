@@ -17,7 +17,12 @@ const REPORT = "reports/mutation/mutation.json"
 //   全件実行 3 回でミュータントごとの結果まで一致した。等価は除外済みで、残る 8 件は
 //   すべてテストの穴（テストを足せば殺せることを確認済み）なので余裕は持たせない。
 //   新しい等価ミュータントが出たら、上限を上げずに除外コメントで扱う。
-const MAX_UNDETECTED = 8
+// 2026-11-28 の実測（穴埋め後）: 生成 69 件、等価として除外 2 件（変わらず）、
+//   Killed 67・Survived 0・NoCoverage 0 → 上限 0
+//   導入時の 8 件（console.error・tabs.query の引数 3 件・executeScript の target・
+//   turndown の bulletListMarker / codeBlockStyle / hr）をテストで殺した。全件実行 3 回で
+//   ミュータントごとの結果まで一致した。以後、生き残りが 1 件でも出たら落ちる。
+const MAX_UNDETECTED = 0
 
 function countStatuses(files) {
   const counts = {}
