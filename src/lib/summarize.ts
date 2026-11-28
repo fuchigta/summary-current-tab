@@ -119,6 +119,7 @@ export async function summarizeCurrentTab() {
     func: getPageContent
   })
 
+  console.info("injected")
   const service = new TurndownService({
     // Stryker disable next-line StringLiteral: 等価。turndown は "setext" 以外を atx として扱う
     headingStyle: "atx",
