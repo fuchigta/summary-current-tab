@@ -1,5 +1,10 @@
 import { AIMessage } from "@langchain/core/messages"
-import { ChatOpenAI } from "@langchain/openai"
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai"
+import {
+  AzureChatOpenAICompletions,
+  ChatOpenAI,
+  ChatOpenAICompletions
+} from "@langchain/openai"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { summarizeCurrentTab } from "~lib/summarize"
@@ -72,5 +77,78 @@ describe("summarizeCurrentTab", () => {
   it("未知のプロバイダはエラーにする", async () => {
     settings.provider = "unknown"
     await expect(summarizeCurrentTab()).rejects.toThrow("unknown provider")
+  })
+
+  // withStructuredOutput は new ChatOpenAI(this.fields) で複製するため、Azure でも
+  // 呼び出し口の ChatOpenAI は素の ChatOpenAI になる。プロバイダごとの設定は複製に
+  // 引き継がれる completions（Chat Completions API の実装）が持つので、そこをモックする
+  it("OpenAI は Storage の model と apiKey で ChatOpenAI を作る", async () => {
+    let llm: ChatOpenAICompletions
+    vi.spyOn(ChatOpenAICompletions.prototype, "_generate").mockImplementation(
+      async function (this: ChatOpenAICompletions) {
+        llm = this
+        const text = JSON.stringify({ markdown: "# OpenAI" })
+        return { generations: [{ text, message: new AIMessage(text) }] }
+      }
+    )
+
+    await expect(summarizeCurrentTab()).resolves.toBe("# OpenAI")
+
+    // AzureChatOpenAICompletions は ChatOpenAICompletions のサブクラスなので、クラスを厳密に比べる
+    expect(llm.constructor).toBe(ChatOpenAICompletions)
+    expect(llm.model).toBe("gpt-4o")
+    expect(llm.apiKey).toBe("dummy")
+  })
+
+  it("Google は Storage の model と apiKey で ChatGoogleGenerativeAI を作る", async () => {
+    Object.assign(settings, {
+      provider: "google",
+      model: "gemini-2.0-flash",
+      apiKey: "google-key"
+    })
+    let llm: ChatGoogleGenerativeAI
+    vi.spyOn(ChatGoogleGenerativeAI.prototype, "_generate").mockImplementation(
+      async function (this: ChatGoogleGenerativeAI) {
+        llm = this
+        const text = JSON.stringify({ markdown: "# Google" })
+        return { generations: [{ text, message: new AIMessage(text) }] }
+      }
+    )
+
+    await expect(summarizeCurrentTab()).resolves.toBe("# Google")
+
+    expect(llm.model).toBe("gemini-2.0-flash")
+    expect(llm.apiKey).toBe("google-key")
+  })
+
+  it("Azure OpenAI は Storage の model・apiKey・apiVersion・basePath で AzureChatOpenAI を作る", async () => {
+    Object.assign(settings, {
+      provider: "azure-openai",
+      model: "my-deployment",
+      apiKey: "azure-key",
+      apiVersion: "2024-10-21",
+      basePath: "https://example.openai.azure.com/openai/deployments"
+    })
+    let llm: AzureChatOpenAICompletions
+    vi.spyOn(
+      AzureChatOpenAICompletions.prototype,
+      "_generate"
+    ).mockImplementation(async function (this: AzureChatOpenAICompletions) {
+      llm = this
+      const text = JSON.stringify({ markdown: "# Azure" })
+      return { generations: [{ text, message: new AIMessage(text) }] }
+    })
+
+    await expect(summarizeCurrentTab()).resolves.toBe("# Azure")
+
+    expect(llm.constructor).toBe(AzureChatOpenAICompletions)
+    expect(llm.model).toBe("my-deployment")
+    expect(llm.apiKey).toBe("azure-key")
+    expect(llm.azureOpenAIApiDeploymentName).toBe("my-deployment")
+    expect(llm.azureOpenAIApiKey).toBe("azure-key")
+    expect(llm.azureOpenAIApiVersion).toBe("2024-10-21")
+    expect(llm.azureOpenAIBasePath).toBe(
+      "https://example.openai.azure.com/openai/deployments"
+    )
   })
 })
